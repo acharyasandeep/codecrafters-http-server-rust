@@ -12,6 +12,17 @@ fn get_path(request_start_line: &str) -> &str {
     let req_arr: Vec<_> = request_start_line.split(" ").collect();
     req_arr[1]
 }
+
+fn make_response(randstr: &str) -> String {
+    let content_length = randstr.len();
+    let response = format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
+        content_length, randstr
+    );
+    response
+
+    // response
+}
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
@@ -29,7 +40,17 @@ fn main() {
                 let path = get_path(parse_request(&request)[0]);
                 let _ = match path {
                     "/" => stream.write_all(b"HTTP/1.1 200 OK\r\n\r\n"),
-                    _ => stream.write_all(b"HTTP/1.1 404 Not Found\r\n\r\n"),
+                    _ => {
+                        if path.starts_with("/echo/") {
+                            let path_split_vec: Vec<_> = path.split("/").collect();
+                            let random_string = path_split_vec[2];
+                            let response_str = make_response(random_string);
+                            let response = response_str.as_bytes();
+                            stream.write_all(response)
+                        } else {
+                            stream.write_all(b"HTTP/1.1 404 Not Found\r\n\r\n")
+                        }
+                    }
                 };
                 println!("Accepted new connection")
             }
