@@ -37,9 +37,18 @@ fn main() {
                 let mut buffer = [0; 1024];
                 stream.read(&mut buffer).unwrap();
                 let request = String::from_utf8_lossy(&buffer[..]);
-                let path = get_path(parse_request(&request)[0]);
+                let parsed_request = parse_request(&request);
+                println!("parsed_request: {:?}", parsed_request);
+                let path = get_path(parsed_request[0]);
                 let _ = match path {
                     "/" => stream.write_all(b"HTTP/1.1 200 OK\r\n\r\n"),
+                    "/user-agent" => {
+                        let user_agent: Vec<_> = parsed_request[2].split(":").collect();
+                        let user_agent = &user_agent[1].trim_start();
+                        let response_str = make_response(user_agent);
+                        let response = response_str.as_bytes();
+                        stream.write_all(response)
+                    }
                     _ => {
                         if path.starts_with("/echo/") {
                             let path_split_vec: Vec<_> = path.split("/").collect();
