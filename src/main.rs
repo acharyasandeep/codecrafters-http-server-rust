@@ -2,7 +2,7 @@
 use std::{
     // collections::HashMap,
     collections::HashMap,
-    io::{BufRead, BufReader, Read, Write},
+    io::{BufRead, BufReader, Error, Read, Write},
     net::{TcpListener, TcpStream},
     thread,
 };
@@ -67,6 +67,17 @@ fn make_response(randstr: &str) -> String {
     // response
 }
 
+fn handle_request_helper(stream: Result<TcpStream, Error>) {
+    match stream {
+        Ok(mut stream) => {
+            let request = Request::new(&stream);
+            println!("request is: {:?}", request);
+            handle_request(request, &mut stream);
+        }
+        Err(e) => println!("Error {}", e),
+    }
+}
+
 fn handle_request(request: Request, stream: &mut TcpStream) {
     let path = &request.path;
     let _ = match path.as_str() {
@@ -104,13 +115,14 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:4221").unwrap();
 
     for stream in listener.incoming() {
-        match stream {
-            Ok(mut stream) => {
-                let request = Request::new(&stream);
-                println!("request is: {:?}", request);
-                thread::spawn(move || handle_request(request, &mut stream));
-            }
-            Err(e) => println!("Error {}", e),
-        }
+        thread::spawn(move || handle_request_helper(stream));
+        // match stream {
+        //     Ok(mut stream) => {
+        //         let request = Request::new(&stream);
+        //         println!("request is: {:?}", request);
+        //         thread::spawn(move || handle_request(request, &mut stream));
+        //     }
+        //     Err(e) => println!("Error {}", e),
+        // }
     }
 }
