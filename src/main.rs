@@ -53,9 +53,10 @@ impl Request {
             http_headers.insert(key.to_string(), value.to_string());
         }
 
+        let default_buffer = String::from("0");
         let buffer_size = http_headers
             .get("Content-Length")
-            .unwrap()
+            .unwrap_or(&default_buffer)
             .parse::<usize>()
             .unwrap_or_else(|_| 0);
 
